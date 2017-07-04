@@ -78,7 +78,8 @@ class ResponseCache
     {
         $clonedResponse = clone $response;
 
-        $clonedResponse->headers->set('laravel-responsecache', 'cached on '.date('Y-m-d H:i:s'));
+        $debugHeader = config('responsecache.debug_header', 'laravel-responsecache');
+        $clonedResponse->headers->set($debugHeader, 'cached on '.date('Y-m-d H:i:s'));
 
         return $clonedResponse;
     }
