@@ -43,4 +43,9 @@ return [
      * You may use a string are an array here.
      */
     'cache_tag' => '',
+
+    /*
+     * header name user to add to response header for debuging.
+     */
+    'debug_header' => 'laravel-responsecache'
 ];
