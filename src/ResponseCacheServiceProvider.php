@@ -15,8 +15,9 @@ class ResponseCacheServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $configPath = $this->app->basePath() . '/config/';
         $this->publishes([
-            __DIR__.'/../config/responsecache.php' => config_path('responsecache.php'),
+            __DIR__.'/../config/responsecache.php' => $configPath . 'responsecache.php',
         ], 'config');
 
         $this->app->bind(CacheProfile::class, function (Application $app) {
@@ -25,7 +26,7 @@ class ResponseCacheServiceProvider extends ServiceProvider
 
         $this->app->when(ResponseCacheRepository::class)
             ->needs(Repository::class)
-            ->give(function (): Repository {
+            ->give(function () {
                 $repository = $this->app['cache']->store(config('responsecache.cache_store'));
                 if (! empty(config('responsecache.cache_tag'))) {
                     return $repository->tags(config('responsecache.cache_tag'));
