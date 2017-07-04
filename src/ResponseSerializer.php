@@ -26,7 +26,7 @@ class ResponseSerializer
         return $response;
     }
 
-    protected function getResponseData(Response $response): array
+    protected function getResponseData(Response $response)
     {
         $statusCode = $response->getStatusCode();
         $headers = $response->headers;
