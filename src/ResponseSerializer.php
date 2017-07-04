@@ -10,12 +10,12 @@ class ResponseSerializer
     const RESPONSE_TYPE_NORMAL = 'response_type_normal';
     const RESPONSE_TYPE_FILE = 'response_type_file';
 
-    public function serialize(Response $response): string
+    public function serialize(Response $response)
     {
         return serialize($this->getResponseData($response));
     }
 
-    public function unserialize(string $serializedResponse): Response
+    public function unserialize($serializedResponse)
     {
         $responseProperties = unserialize($serializedResponse);
 
@@ -44,9 +44,9 @@ class ResponseSerializer
         return compact('statusCode', 'headers', 'content', 'type');
     }
 
-    protected function buildResponse(array $responseProperties): Response
+    protected function buildResponse(array $responseProperties)
     {
-        $type = $responseProperties['type'] ?? self::RESPONSE_TYPE_NORMAL;
+        $type = $responseProperties['type'] ? self::RESPONSE_TYPE_NORMAL : '';
 
         if ($type === self::RESPONSE_TYPE_FILE) {
             return new BinaryFileResponse(

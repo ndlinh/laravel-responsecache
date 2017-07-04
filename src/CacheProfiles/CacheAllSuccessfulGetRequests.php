@@ -7,7 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CacheAllSuccessfulGetRequests extends BaseCacheProfile
 {
-    public function shouldCacheRequest(Request $request): bool
+    public function shouldCacheRequest(Request $request)
     {
         if ($request->ajax()) {
             return false;
@@ -20,7 +20,7 @@ class CacheAllSuccessfulGetRequests extends BaseCacheProfile
         return $request->isMethod('get');
     }
 
-    public function shouldCacheResponse(Response $response): bool
+    public function shouldCacheResponse(Response $response)
     {
         return $response->isSuccessful() || $response->isRedirection();
     }

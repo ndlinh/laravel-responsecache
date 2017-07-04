@@ -19,7 +19,7 @@ class CacheResponse
         $this->responseCache = $responseCache;
     }
 
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next)
     {
         if ($this->responseCache->enabled($request)) {
             if ($this->responseCache->hasBeenCached($request)) {

@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 abstract class BaseCacheProfile implements CacheProfile
 {
-    public function enabled(Request $request): bool
+    public function enabled(Request $request)
     {
         return config('responsecache.enabled');
     }
@@ -16,7 +16,7 @@ abstract class BaseCacheProfile implements CacheProfile
     /*
      * Return the time when the cache must be invalided.
      */
-    public function cacheRequestUntil(Request $request): DateTime
+    public function cacheRequestUntil(Request $request)
     {
         return Carbon::now()->addMinutes(
             config('responsecache.cache_lifetime_in_minutes')
@@ -26,7 +26,7 @@ abstract class BaseCacheProfile implements CacheProfile
     /*
      * Set a string to add to differentiate this request from others.
      */
-    public function cacheNameSuffix(Request $request): string
+    public function cacheNameSuffix(Request $request)
     {
         if (auth()->check()) {
             return auth()->user()->id;
@@ -35,7 +35,7 @@ abstract class BaseCacheProfile implements CacheProfile
         return '';
     }
 
-    public function isRunningInConsole(): bool
+    public function isRunningInConsole()
     {
         if (app()->environment('testing')) {
             return false;

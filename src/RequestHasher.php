@@ -15,7 +15,7 @@ class RequestHasher
         $this->cacheProfile = $cacheProfile;
     }
 
-    public function getHashFor(Request $request): string
+    public function getHashFor(Request $request)
     {
         return 'responsecache-'.md5(
             "{$request->getUri()}/{$request->getMethod()}/".$this->cacheProfile->cacheNameSuffix($request)

@@ -24,17 +24,17 @@ class ResponseCacheRepository
      * @param \Symfony\Component\HttpFoundation\Response $response
      * @param \DateTime|int $minutes
      */
-    public function put(string $key, $response, $minutes)
+    public function put($key, $response, $minutes)
     {
         $this->cache->put($key, $this->responseSerializer->serialize($response), $minutes);
     }
 
-    public function has(string $key): bool
+    public function has($key)
     {
         return $this->cache->has($key);
     }
 
-    public function get(string $key): Response
+    public function get($key)
     {
         return $this->responseSerializer->unserialize($this->cache->get($key));
     }

@@ -24,12 +24,12 @@ class ResponseCache
         $this->cacheProfile = $cacheProfile;
     }
 
-    public function enabled(Request $request): bool
+    public function enabled(Request $request)
     {
         return $this->cacheProfile->enabled($request);
     }
 
-    public function shouldCache(Request $request, Response $response): bool
+    public function shouldCache(Request $request, Response $response)
     {
         if ($request->attributes->has('responsecache.doNotCache')) {
             return false;
@@ -42,7 +42,7 @@ class ResponseCache
         return $this->cacheProfile->shouldCacheResponse($response);
     }
 
-    public function cacheResponse(Request $request, Response $response): Response
+    public function cacheResponse(Request $request, Response $response)
     {
         if (config('responsecache.add_cache_time_header')) {
             $response = $this->addCachedHeader($response);
@@ -57,14 +57,14 @@ class ResponseCache
         return $response;
     }
 
-    public function hasBeenCached(Request $request): bool
+    public function hasBeenCached(Request $request)
     {
         return config('responsecache.enabled')
             ? $this->cache->has($this->hasher->getHashFor($request))
             : false;
     }
 
-    public function getCachedResponseFor(Request $request): Response
+    public function getCachedResponseFor(Request $request)
     {
         return $this->cache->get($this->hasher->getHashFor($request));
     }
@@ -74,7 +74,7 @@ class ResponseCache
         $this->cache->flush();
     }
 
-    protected function addCachedHeader(Response $response): Response
+    protected function addCachedHeader(Response $response)
     {
         $clonedResponse = clone $response;
 

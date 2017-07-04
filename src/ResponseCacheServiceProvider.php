@@ -3,7 +3,7 @@
 namespace Spatie\ResponseCache;
 
 use Illuminate\Cache\Repository;
-use Illuminate\Foundation\Application;
+use Laravel\Lumen\Application;
 use Illuminate\Support\ServiceProvider;
 use Spatie\ResponseCache\Commands\Flush;
 use Spatie\ResponseCache\CacheProfiles\CacheProfile;
