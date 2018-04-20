@@ -8,7 +8,6 @@ use Illuminate\Routing\Router;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Database\Schema\Blueprint;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Symfony\Component\HttpFoundation\Response;
 use Spatie\ResponseCache\Middlewares\CacheResponse;
 use Spatie\ResponseCache\ResponseCacheServiceProvider;
 use Spatie\ResponseCache\Middlewares\DoNotCacheResponse;
@@ -112,7 +111,7 @@ abstract class TestCase extends Orchestra
             return redirect('/');
         });
 
-        Route::any('/random', function () {
+        Route::any('/random/{id?}', function () {
             return str_random();
         });
 
@@ -127,6 +126,10 @@ abstract class TestCase extends Orchestra
         Route::any('/image', function () {
             return response()->file(__DIR__.'/User.php');
         });
+
+        Route::any('/cache-for-given-lifetime', function () {
+            return 'dummy response';
+        })->middleware('cacheResponse:5');
     }
 
     public function getTempDirectory($suffix = '')
@@ -180,5 +183,6 @@ abstract class TestCase extends Orchestra
     {
         $this->app[Kernel::class]->pushMiddleware(CacheResponse::class);
         $this->app[Router::class]->aliasMiddleware('doNotCacheResponse', DoNotCacheResponse::class);
+        $this->app[Router::class]->aliasMiddleware('cacheResponse', CacheResponse::class);
     }
 }

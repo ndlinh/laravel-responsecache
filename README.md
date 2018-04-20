@@ -6,22 +6,17 @@
 [![Quality Score](https://img.shields.io/scrutinizer/g/spatie/laravel-responsecache.svg?style=flat-square)](https://scrutinizer-ci.com/g/spatie/laravel-responsecache)
 [![Total Downloads](https://img.shields.io/packagist/dt/spatie/laravel-responsecache.svg?style=flat-square)](https://packagist.org/packages/spatie/laravel-responsecache)
 
-This Laravel >=5.4 package can cache an entire response. By default it will cache all successful get-requests for a week. This could potentially speed up the response quite considerably.
+This Laravel 5.5 package can cache an entire response. By default it will cache all successful get-requests for a week. This could potentially speed up the response quite considerably.
 
 So the first time a request comes in the package will save the response before sending it to the users. When the same request comes in again we're not going through the entire application but just respond with the saved response.
 
 
 If you're using Laravel 5.1, 5.2 or 5.3 check out the [v1 branch](https://github.com/spatie/laravel-responsecache/tree/v1).
 
+If you're using Laravel 5.4 check out the [v2 branch](https://github.com/spatie/laravel-responsecache/tree/v2).
+
+
 Spatie is a webdesign agency in Antwerp, Belgium. You'll find an overview of all our open source projects [on our website](https://spatie.be/opensource).
-
-## Postcardware
-
-You're free to use this package (it's [MIT-licensed](LICENSE.md)), but if it makes it to your production environment you are required to send us a postcard from your hometown, mentioning which of our package(s) you are using.
-
-Our address is: Spatie, Samberstraat 69D, 2060 Antwerp, Belgium.
-
-The best postcards will get published on the open source page on our website.
 
 ## Installation
 
@@ -30,27 +25,7 @@ You can install the package via composer:
 $ composer require spatie/laravel-responsecache
 ```
 
-Next, you must install the service provider:
-
-```php
-// config/app.php
-
-'providers' => [
-    ...
-    Spatie\ResponseCache\ResponseCacheServiceProvider::class,
-];
-```
-
-This package also comes with a facade.
-
-```php
-// config/app.php
-
-'aliases' => [
-    ...
-   'ResponseCache' => Spatie\ResponseCache\ResponseCacheFacade::class,
-];
-```
+The package will automatically register itself.
 
 You can publish the config file with:
 ```bash
@@ -79,7 +54,7 @@ return [
 
     /*
      * When using the default CacheRequestFilter this setting controls the
-     * number of minutes responses must be cached.
+     * default number of minutes responses must be cached.
      */
     'cache_lifetime_in_minutes' => env('RESPONSE_CACHE_LIFETIME', 60 * 24 * 7),
 
@@ -100,9 +75,9 @@ return [
     /*
      * If the cache driver you configured supports tags, you may specify a tag name
      * here. All responses will be tagged. When clearing the responsecache only
-     * items with that tag will be flushed.
+     * items with that tag will be cleared.
      *
-     * You may use a string are an array here.
+     * You may use a string or an array here.
      */
     'cache_tag' => '',
 ];
@@ -117,7 +92,7 @@ And finally you should install the provided middlewares `\Spatie\ResponseCache\M
 ...
 
 protected $middlewareGroups = [
-   web' => [
+   'web' => [
        ...
        \Spatie\ResponseCache\Middlewares\CacheResponse::class,
    ],
@@ -139,18 +114,31 @@ By default the package will cache all successful `get`-requests for a week.
 Logged in users will each have their own separate cache. If this behaviour is what you
  need, you're done: installing the `ResponseCacheServerProvider` was enough.
 
-
-### Flushing the cache
-The entire cache can be flushed with:
+### Clearing the cache
+The entire cache can be cleared with:
 ```php
-ResponseCache::flush();
+ResponseCache::clear();
 ```
-This will flush everything from the cache store specified in the config-file.
+This will clear everything from the cache store specified in the config-file.
 
 The same can be accomplished by issuing this artisan command:
 
 ```bash
-$ php artisan responsecache:flush
+$ php artisan responsecache:clear
+```
+
+### Forget one or several specific URI(s)
+
+You can forget specific URIs with:
+```php
+// Forget one URI
+ResponseCache::forget('/some-uri');
+
+// Forget several URIs
+ResponseCache::forget(['/some-uri', '/other-uri']);
+
+// Alternatively
+ResponseCache::forget('/some-uri', '/other-uri');
 ```
 
 ### Preventing a request from being cached
@@ -223,6 +211,30 @@ interface CacheProfile
 }
 ```
 
+### Caching specific routes
+Instead of registering the `cacheResponse` middleware globally, you can also register it as route middleware.
+
+```php
+protected $routeMiddleware = [
+   ...
+   'cacheResponse' => \Spatie\ResponseCache\Middlewares\CacheResponse::class,
+];
+```
+
+When using the route middleware you can specify the number of minutes these routes should be cached:
+
+```php
+// cache this route for 5 minutes
+Route::get('/my-special-snowflake', 'SnowflakeController@index')->middleware('cacheResponse:5');
+
+// cache all these routes for 10 minutes
+Route::group(function() {
+   Route::get('/another-special-snowflake', 'AnotherSnowflakeController@index');
+   
+   Route::get('/yet-another-special-snowflake', 'YetAnotherSnowflakeController@index');
+})->middleware('cacheResponse:10');
+```
+
 ### Events
 
 There are several events you can use to monitor and debug response caching in your application.
@@ -239,13 +251,23 @@ This event is fired when a request passes through the `ResponseCache` middleware
 
 This event is fired when a request passes through the `ResponseCache` middleware but no cached response was found or returned.
 
-#### FlushingResponseCache and FlushedResponseCache
+#### ClearingResponseCache and ClearedResponseCache
 
-`Spatie\ResponseCache\Events\FlushingResponseCache`
+`Spatie\ResponseCache\Events\ClearingResponseCache`
 
-`Spatie\ResponseCache\Events\FlushedResponseCache`
+`Spatie\ResponseCache\Events\ClearedResponseCache`
 
-These events are fired respectively when the `responsecache:flush` is started and finished.
+These events are fired respectively when the `responsecache:clear` is started and finished.
+
+### CSRF Tokens
+
+When a response is cached and a CSRF token exists on the page, it too will be cached and cause token mismatch or page expired errors. You can't reliably cache the response for the entire page when using forms that require CSRF tokens because the tokens will never match.
+
+It is recommended that you disable response caching for pages where forms exists to avoid these errors.
+
+Alternatively, but not recommended, you may disable CSRF protection on a per-route basis. It is highly unadvisable to disable CSRF for user-authenticated pages at the risk of cross-site request forgery.
+
+See how to disable CSRF on per-route basis here: https://laracasts.com/discuss/channels/laravel/disabling-csrf-for-a-specific-route-in-laravel-5
 
 ## Changelog
 
@@ -271,13 +293,25 @@ Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
 
 If you discover any security related issues, please email freek@spatie.be instead of using the issue tracker.
 
+## Postcardware
+
+You're free to use this package, but if it makes it to your production environment we highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using.
+
+Our address is: Spatie, Samberstraat 69D, 2060 Antwerp, Belgium.
+
+We publish all received postcards [on our company website](https://spatie.be/en/opensource/postcards).
+
 ## Credits
 
 - [Freek Van der Herten](https://github.com/freekmurze)
 - [All Contributors](../../contributors)
 
-## About Spatie
-Spatie is a webdesign agency in Antwerp, Belgium. You'll find an overview of all our open source projects [on our website](https://spatie.be/opensource).
+## Support us
+
+Spatie is a webdesign agency based in Antwerp, Belgium. You'll find an overview of all our open source projects [on our website](https://spatie.be/opensource).
+
+Does your business depend on our contributions? Reach out and support us on [Patreon](https://www.patreon.com/spatie). 
+All pledges will be dedicated to allocating workforce on maintenance and new awesome stuff.
 
 ## License
 

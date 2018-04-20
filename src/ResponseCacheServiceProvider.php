@@ -5,6 +5,7 @@ namespace Spatie\ResponseCache;
 use Illuminate\Cache\Repository;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
+use Spatie\ResponseCache\Commands\Clear;
 use Spatie\ResponseCache\Commands\Flush;
 use Spatie\ResponseCache\CacheProfiles\CacheProfile;
 
@@ -39,7 +40,12 @@ class ResponseCacheServiceProvider extends ServiceProvider
 
         $this->app['command.responsecache:flush'] = $this->app->make(Flush::class);
 
-        $this->commands(['command.responsecache:flush']);
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                Flush::class,
+                Clear::class,
+            ]);
+        }
     }
 
     /**

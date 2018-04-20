@@ -2,16 +2,14 @@
 
 namespace Spatie\ResponseCache\Test;
 
+use Carbon\Carbon;
 use ResponseCache;
 use Illuminate\Support\Facades\Event;
 use Spatie\ResponseCache\Events\CacheMissed;
 use Spatie\ResponseCache\Events\ResponseCacheHit;
-use Laravel\BrowserKitTesting\Concerns\MakesHttpRequests;
 
 class IntegrationTest extends TestCase
 {
-    use MakesHttpRequests;
-
     public function setUp()
     {
         parent::setUp();
@@ -65,10 +63,6 @@ class IntegrationTest extends TestCase
     /** @test */
     public function it_will_not_cache_errors()
     {
-        if (starts_with($this->app->version(), '5.1')) {
-            $this->markTestSkipped('This test only works in modern versions of Laravel');
-        }
-
         $firstResponse = $this->call('GET', '/notfound');
         $secondResponse = $this->call('GET', '/notfound');
 
@@ -100,6 +94,41 @@ class IntegrationTest extends TestCase
         $this->assertRegularResponse($secondResponse);
 
         $this->assertDifferentResponse($firstResponse, $secondResponse);
+    }
+
+    /** @test */
+    public function it_can_forget_a_specific_cached_request()
+    {
+        $firstResponse = $this->call('GET', '/random');
+        $this->assertRegularResponse($firstResponse);
+
+        ResponseCache::forget('/random');
+
+        $secondResponse = $this->call('GET', '/random');
+        $this->assertRegularResponse($secondResponse);
+
+        $this->assertDifferentResponse($firstResponse, $secondResponse);
+    }
+
+    /** @test */
+    public function it_can_forget_several_specific_cached_requests_at_once()
+    {
+        $firstResponseFirstCall = $this->call('GET', '/random/1');
+        $this->assertRegularResponse($firstResponseFirstCall);
+
+        $secondResponseFirstCall = $this->call('GET', '/random/2');
+        $this->assertRegularResponse($secondResponseFirstCall);
+
+        ResponseCache::forget(['/random/1', '/random/2']);
+
+        $firstResponseSecondCall = $this->call('GET', '/random/1');
+        $this->assertRegularResponse($firstResponseSecondCall);
+
+        $secondResponseSecondCall = $this->call('GET', '/random/2');
+        $this->assertRegularResponse($secondResponseSecondCall);
+
+        $this->assertDifferentResponse($firstResponseFirstCall, $firstResponseSecondCall);
+        $this->assertDifferentResponse($secondResponseFirstCall, $secondResponseSecondCall);
     }
 
     /** @test */
@@ -179,5 +208,48 @@ class IntegrationTest extends TestCase
         $this->assertCachedResponse($secondResponse);
 
         $this->assertSameResponse($firstResponse, $secondResponse);
+    }
+
+    /** @test */
+    public function it_wont_cache_if_lifetime_is_0()
+    {
+        $this->app['config']->set('responsecache.cache_lifetime_in_minutes', 0);
+
+        $firstResponse = $this->call('get', '/');
+        $secondResponse = $this->call('get', '/');
+
+        $this->assertRegularResponse($firstResponse);
+        $this->assertRegularResponse($secondResponse);
+    }
+
+    /** @test */
+    public function it_will_cache_response_for_given_lifetime_which_is_defined_as_middleware_parameter()
+    {
+        // Set default lifetime as 0 to check if it will cache for given lifetime
+        $this->app['config']->set('responsecache.cache_lifetime_in_minutes', 0);
+
+        $firstResponse = $this->call('get', '/cache-for-given-lifetime');
+        $secondResponse = $this->call('get', '/cache-for-given-lifetime');
+
+        $this->assertRegularResponse($firstResponse);
+        $this->assertCachedResponse($secondResponse);
+    }
+
+    /** @test */
+    public function it_will_reproduce_cache_if_given_lifetime_is_expired()
+    {
+        // Set default lifetime as 0 to disable middleware that is already pushed to Kernel
+        $this->app['config']->set('responsecache.cache_lifetime_in_minutes', 0);
+
+        Carbon::setTestNow(Carbon::now()->subMinutes(6));
+        $firstResponse = $this->call('get', '/cache-for-given-lifetime');
+        $this->assertRegularResponse($firstResponse);
+
+        $secondResponse = $this->call('get', '/cache-for-given-lifetime');
+        $this->assertCachedResponse($secondResponse);
+
+        Carbon::setTestNow();
+        $thirdResponse = $this->call('get', '/cache-for-given-lifetime');
+        $this->assertRegularResponse($thirdResponse);
     }
 }

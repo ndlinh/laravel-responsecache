@@ -39,8 +39,21 @@ class ResponseCacheRepository
         return $this->responseSerializer->unserialize($this->cache->get($key));
     }
 
+    /**
+     * @deprecated Use the new clear method, this is just an alias.
+     */
     public function flush()
     {
-        $this->cache->flush();
+        $this->clear();
+    }
+
+    public function clear()
+    {
+        $this->cache->clear();
+    }
+
+    public function forget(string $key): bool
+    {
+        return $this->cache->forget($key);
     }
 }
