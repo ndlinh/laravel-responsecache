@@ -17,7 +17,7 @@ return [
 
     /*
      * When using the default CacheRequestFilter this setting controls the
-     * number of minutes responses must be cached.
+     * default number of minutes responses must be cached.
      */
     'cache_lifetime_in_minutes' => env('RESPONSE_CACHE_LIFETIME', 60 * 24 * 7),
 
@@ -40,7 +40,7 @@ return [
      * here. All responses will be tagged. When clearing the responsecache only
      * items with that tag will be flushed.
      *
-     * You may use a string are an array here.
+     * You may use a string or an array here.
      */
     'cache_tag' => '',
 

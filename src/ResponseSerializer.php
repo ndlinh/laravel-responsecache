@@ -3,6 +3,7 @@
 namespace Spatie\ResponseCache;
 
 use Symfony\Component\HttpFoundation\Response;
+use Spatie\ResponseCache\Exceptions\CouldNotUnserialize;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ResponseSerializer
@@ -10,14 +11,18 @@ class ResponseSerializer
     const RESPONSE_TYPE_NORMAL = 'response_type_normal';
     const RESPONSE_TYPE_FILE = 'response_type_file';
 
-    public function serialize(Response $response)
+    public function serialize(Response $response): string
     {
         return serialize($this->getResponseData($response));
     }
 
-    public function unserialize($serializedResponse)
+    public function unserialize(string $serializedResponse): Response
     {
         $responseProperties = unserialize($serializedResponse);
+
+        if (! $this->containsValidResponseProperties($responseProperties)) {
+            throw CouldNotUnserialize::serializedResponse($serializedResponse);
+        }
 
         $response = $this->buildResponse($responseProperties);
 
@@ -26,7 +31,7 @@ class ResponseSerializer
         return $response;
     }
 
-    protected function getResponseData(Response $response)
+    protected function getResponseData(Response $response): array
     {
         $statusCode = $response->getStatusCode();
         $headers = $response->headers;
@@ -44,9 +49,22 @@ class ResponseSerializer
         return compact('statusCode', 'headers', 'content', 'type');
     }
 
-    protected function buildResponse(array $responseProperties)
+    protected function containsValidResponseProperties($properties): bool
     {
-        $type = $responseProperties['type'] ? self::RESPONSE_TYPE_NORMAL : '';
+        if (! is_array($properties)) {
+            return false;
+        }
+
+        if (! isset($properties['content'], $properties['statusCode'])) {
+            return false;
+        }
+
+        return true;
+    }
+
+    protected function buildResponse(array $responseProperties): Response
+    {
+        $type = $responseProperties['type'] ?? self::RESPONSE_TYPE_NORMAL;
 
         if ($type === self::RESPONSE_TYPE_FILE) {
             return new BinaryFileResponse(
