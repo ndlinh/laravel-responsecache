@@ -64,7 +64,7 @@ class ResponseCache
             : false;
     }
 
-    public function getCachedResponseFor(Request $request): Response
+    public function getCachedResponseFor(Request $request): ?Response
     {
         return $this->cache->get($this->hasher->getHashFor($request));
     }

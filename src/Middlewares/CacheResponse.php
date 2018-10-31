@@ -26,8 +26,10 @@ class CacheResponse
 
                 try {
                     $res = $this->responseCache->getCachedResponseFor($request);
-                    event(new ResponseCacheHit($request));
-                    return $res;
+                    if ($res != null) {
+                        event(new ResponseCacheHit($request));
+                        return $res;
+                    }
                 } catch (\Exception $e) {
                     //mute it
                 }
